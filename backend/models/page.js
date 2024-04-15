@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const stargate_mongoose = require('stargate-mongoose');
+mongoose.setDriver(stargate_mongoose.driver)
 
 const pageSchema = new Schema(
   {

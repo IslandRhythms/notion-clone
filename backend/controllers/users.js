@@ -3,7 +3,8 @@ const { randomBytes } = require("crypto");
 const { promisify } = require("util");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
+const dotenv = require('dotenv')
+dotenv.config({ path: '../.env'});
 const User = require("../models/user");
 const transport = require("../emails/transport");
 
@@ -43,13 +44,14 @@ const signup = async (req, res, next) => {
       activationToken: activationToken,
     });
     const savedUser = await user.save();
-
-    await transport.sendMail({
-      from: process.env.MAIL_SENDER,
-      to: savedUser.email,
-      subject: "Confirm Your Email Address",
-      html: emailConfirmationTemplate(savedUser.activationToken),
-    });
+    if (process.env.NODE_ENV == 'local') {
+      await transport.sendMail({
+        from: process.env.MAIL_SENDER,
+        to: savedUser.email,
+        subject: "Confirm Your Email Address",
+        html: emailConfirmationTemplate(savedUser.activationToken),
+      });
+    }
 
     // Automatically log in user after registration
     const token = jwt.sign(
