@@ -1,5 +1,8 @@
 const fs = require("fs");
 const path = require("path");
+const axios = require('axios');
+const dotenv = require('dotenv');
+dotenv.config({ path: '../.env' });
 
 const Page = require("../models/page");
 const User = require("../models/user");
@@ -34,8 +37,13 @@ const getPages = async (req, res, next) => {
 const getPage = async (req, res, next) => {
   const userId = req.userId;
   const pageId = req.params.pageId;
-
+  console.log('what is pageId', pageId, typeof pageId);
   try {
+    if (pageId == 'undefined') {
+      const err = new Error("Could not find page by undefined id.");
+      err.statusCode = 404;
+      throw err;
+    }
     const page = await Page.findById(pageId);
     if (!page) {
       const err = new Error("Could not find page by id.");
@@ -64,6 +72,7 @@ const getPage = async (req, res, next) => {
 const postPage = async (req, res, next) => {
   const userId = req.userId;
   const blocks = req.body.blocks;
+  console.log('is this being called early?', userId, blocks)
   const page = new Page({
     blocks: blocks,
     creator: userId || null,
@@ -215,6 +224,20 @@ const clearImage = (filePath) => {
   fs.unlink(filePath, (err) => console.log(err));
 };
 
+const answerQuestion = async (req, res, next) => {
+  const embedding = await createEmbedding(req.body.question);
+
+  const notes = await Page.find().limit(3).sort({ $vector: { $meta: embedding } });
+
+  const prompt = `You are a helpful assistant that summarizes relevant notes to help answer a user's questions.
+  Given the following notes, answer the user's question.
+  
+  ${notes.map(note => 'Note: ' + note.content).join('\n\n')}
+  `.trim();
+  const answers = await makeChatGPTRequest(prompt, req.body.question);
+  return res.status(200).json({ sources: notes.map(x => ({ blocks: x.blocks, createdAt: new Date(x.createdAt).toDateString() })), answer: answers })
+};
+
 exports.getPages = getPages;
 exports.getPage = getPage;
 exports.postPage = postPage;
@@ -222,3 +245,39 @@ exports.putPage = putPage;
 exports.deletePage = deletePage;
 exports.postImage = postImage;
 exports.deleteImage = deleteImage;
+exports.answerQuestion = answerQuestion;
+
+function createEmbedding(input) {
+  return axios({
+    method: 'POST',
+    url: 'https://api.openai.com/v1/embeddings',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    data: {
+      model: 'text-embedding-ada-002',
+      input
+    }
+  }).then(res => res.data.data[0].embedding);
+}
+
+function makeChatGPTRequest(systemPrompt, question) {
+  const options = {
+    method: 'POST',
+    url: 'https://api.openai.com/v1/chat/completions',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    data: {
+      model: 'gpt-3.5-turbo-1106',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: question }
+      ]
+    }
+  };
+
+  return axios(options).then(res => res.data);
+}

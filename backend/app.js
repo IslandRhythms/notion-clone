@@ -2,6 +2,8 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 const mongoose = require("mongoose");
+mongoose.set('autoCreate', false);
+mongoose.set('autoIndex', false);
 const stargate_mongoose = require('stargate-mongoose');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
@@ -9,6 +11,7 @@ const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
 const driver = stargate_mongoose.driver;
+const Page = require('./models/page');
 
 const pagesRoutes = require("./routes/pages");
 const usersRoutes = require("./routes/users");
@@ -114,6 +117,10 @@ db.on("error", (err) => {
 
 db.once("open", async () => {
   console.log("**** CONNECTED WITH DATABASE SUCCESSFULLY ****");
+  await Page.db.dropCollection('pages');
+  await Page.createCollection({
+    vector: { dimension: 1536, metric: 'cosine' }
+  });
 });
 
 console.log(db.modelNames())
