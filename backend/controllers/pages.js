@@ -235,7 +235,7 @@ const answerQuestion = async (req, res, next) => {
   ${notes.map(note => 'Note: ' + note.content).join('\n\n')}
   `.trim();
   const answers = await makeChatGPTRequest(prompt, req.body.question);
-  return res.status(200).json({ sources: notes.map(x => ({ blocks: x.blocks, createdAt: new Date(x.createdAt).toDateString() })), answer: answers })
+  return res.status(200).json({ sources: notes.map(x => ({ blocks: x.blocks, createdAt: new Date(x.createdAt).toDateString(), updatedAt: new Date(x.updatedAt).toDateString() })), answer: answers })
 };
 
 exports.getPages = getPages;

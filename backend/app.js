@@ -117,10 +117,6 @@ db.on("error", (err) => {
 
 db.once("open", async () => {
   console.log("**** CONNECTED WITH DATABASE SUCCESSFULLY ****");
-  await Page.db.dropCollection('pages');
-  await Page.createCollection({
-    vector: { dimension: 1536, metric: 'cosine' }
-  });
 });
 
 console.log(db.modelNames())

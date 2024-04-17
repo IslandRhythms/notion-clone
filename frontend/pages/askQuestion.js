@@ -5,6 +5,7 @@ import cookies from "next-cookies";
 import { UserDispatchContext } from "../context/UserContext";
 import Notice from "../components/notice";
 import Input from "../components/input";
+import Card from '../components/card';
 
 const form = {
   id: "question-form",
@@ -56,7 +57,8 @@ const askQuestionPage = () => {
       if (data.errCode) {
         setNotice({ type: "ERROR", message: data.message });
       } else {
-        dispatch({ type: "question" });
+        // dispatch({ type: "question" });
+        console.log('data.sources', data.sources, 'answer', data.answer);
         setNotice({ type: 'question', sources: data.sources, answer: data.answer });
         // router.push("/pages");
       }
@@ -69,7 +71,7 @@ const askQuestionPage = () => {
 
   return (
     <>
-      <h1 className="pageHeading">Login</h1>
+      <h1 className="pageHeading">Search your notes by asking a question</h1>
       <form id={form.id} onSubmit={handleSubmit}>
         {form.inputs.map((input, key) => {
           return (
@@ -92,12 +94,22 @@ const askQuestionPage = () => {
         )}
         <button type={form.submitButton.type}>{form.submitButton.label}</button>
       </form>
-      {notice.answer && (
-        <div>
-          <p>{notice.answer}</p>
-          <p>{notice.sources}</p>
-        </div>
-      )}
+      <div>
+      {notice.sources && notice.sources.map((page, key) => {
+          const updatedAtDate = new Date(Date.parse(page.updatedAt));
+          const pageId = page._id;
+          const blocks = page.blocks;
+          return (
+            <Card
+              key={key}
+              pageId={pageId}
+              date={updatedAtDate}
+              content={blocks}
+              deleteCard={(pageId) => deleteCard(pageId)}
+            />
+          );
+        })}
+      </div>
     </>
   );
 };
@@ -105,10 +117,10 @@ const askQuestionPage = () => {
 export const getServerSideProps = (context) => {
   const { token } = cookies(context);
   const res = context.res;
-  if (token) {
-    res.writeHead(302, { Location: `/account` });
-    res.end();
-  }
+  // if (token) {
+  //   res.writeHead(302, { Location: `/account` });
+  //   res.end();
+  // }
   return { props: {} };
 };
 
