@@ -12,7 +12,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const driver = stargate_mongoose.driver;
 const Page = require('./models/page');
-
+const User = require('./models/user');
 const pagesRoutes = require("./routes/pages");
 const usersRoutes = require("./routes/users");
 
@@ -117,6 +117,7 @@ db.on("error", (err) => {
 
 db.once("open", async () => {
   console.log("**** CONNECTED WITH DATABASE SUCCESSFULLY ****");
+  // await User.findOneAndDelete({ email: '' });
 });
 
 console.log(db.modelNames())

@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require('dotenv')
 dotenv.config({ path: '../.env'});
 const User = require("../models/user");
-const transport = require("../emails/transport");
+const { sendMail } = require("../emails/transport");
 
 const {
   resetPasswordTemplate,
@@ -45,7 +45,7 @@ const signup = async (req, res, next) => {
     });
     const savedUser = await user.save();
     if (process.env.NODE_ENV == 'local') {
-      await transport.sendMail({
+      await sendMail({
         from: process.env.MAIL_SENDER,
         to: savedUser.email,
         subject: "Confirm Your Email Address",
@@ -227,7 +227,7 @@ const getResetToken = async (req, res, next) => {
     user.resetTokenExpiry = resetTokenExpiry;
     const savedUser = await user.save();
 
-    await transport.sendMail({
+    await sendMail({
       from: process.env.MAIL_SENDER,
       to: savedUser.email,
       subject: "Your Password Reset Token",

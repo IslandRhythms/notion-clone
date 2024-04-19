@@ -1,12 +1,39 @@
-const nodemailer = require("nodemailer");
+const axios = require('axios');
+const assert = require('assert');
 
-const transport = nodemailer.createTransport({
-  host: process.env.MAIL_HOST,
-  port: process.env.MAIL_PORT,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASSWORD,
-  },
-});
+const bccThisEmail = process.env.BCC_THIS_EMAIL;
 
-module.exports = transport;
+const from = process.env.MAILGUN_FROM_EMAIL;
+assert.ok(from);
+
+const domain = process.env.MAILGUN_DOMAIN;
+assert.ok(domain);
+
+const privateKey = process.env.MAILGUN_PRIVATE_KEY;
+assert.ok(privateKey);
+
+exports.sendMail = async function sendMail(params) {
+  const url = `https://api.mailgun.net/v3/${domain}/messages`;
+  
+  try {
+    const { data } = await axios(
+      url,
+      {
+        method: 'post',
+        params: params,
+        auth: {
+          username: 'api',
+          password: privateKey
+        }
+      }
+    );
+    if (data && data.message) {
+      return data.message;
+    }
+  } catch (error) {
+    if (error instanceof axios.AxiosError) {
+      throw new Error(`Error sending email: ${error.response.data} (status code ${error.response.status})`);
+    }
+    throw error;
+  }
+};
