@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const stargate_mongoose = require('stargate-mongoose')
 const Schema = mongoose.Schema;
-
+mongoose.setDriver(stargate_mongoose.driver)
 const userSchema = new Schema(
   {
     email: {

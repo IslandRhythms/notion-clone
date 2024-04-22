@@ -2,12 +2,17 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 const mongoose = require("mongoose");
+mongoose.set('autoCreate', false);
+mongoose.set('autoIndex', false);
+const stargate_mongoose = require('stargate-mongoose');
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
-
+const driver = stargate_mongoose.driver;
+const Page = require('./models/page');
+const User = require('./models/user');
 const pagesRoutes = require("./routes/pages");
 const usersRoutes = require("./routes/users");
 
@@ -97,12 +102,10 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`**** SERVER STARTED AT PORT ${PORT} ****`);
 });
-
+mongoose.setDriver(driver);
 // ----- CHECKING IF CONNECTED WITH DATABASE OR CATCH & DISPLAY ERRORS ----
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const uri = stargate_mongoose.createAstraUri(process.env.ASTRA_API_ENDPOINT, process.env.ASTRA_APPLICATION_TOKEN, process.env.ASTRA_NAMESPACE)
+mongoose.connect(uri, { isAstra: true });
 
 const db = mongoose.connection;
 
@@ -112,6 +115,9 @@ db.on("error", (err) => {
   console.log(`\n ${err}`);
 });
 
-db.once("open", () => {
+db.once("open", async () => {
   console.log("**** CONNECTED WITH DATABASE SUCCESSFULLY ****");
+  // await User.findOneAndDelete({ email: '' });
 });
+
+console.log(db.modelNames())

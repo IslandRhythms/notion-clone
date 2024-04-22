@@ -26,4 +26,6 @@ router.post("/images", pagesController.postImage);
 // DELETE /pages/images/{name}
 router.delete("/images/:imageName", pagesController.deleteImage);
 
+router.post("/question", pagesController.answerQuestion);
+
 module.exports = router;
